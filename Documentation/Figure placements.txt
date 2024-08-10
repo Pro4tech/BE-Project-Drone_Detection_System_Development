@@ -1,0 +1,5 @@
+Fig1. Data Creation and Preparation - place in the middle of Chp3 part 1 (between filtering and data storage)
+Fig2. machine learning model and traing - place in middle of chp3 prt 2 (between model training and model Eval )
+Fig3. Data Creation - place in middle of chp4 prt 1(between filtering and data storage)
+Fig4. ML training - place in middle of chp4 prt 2 (between Model traing and Eval)
+Fig5. Model implementaion - place in middle of chp4 prt 3 (Between Prediction and model Input)

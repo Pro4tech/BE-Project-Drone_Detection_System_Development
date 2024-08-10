@@ -1,0 +1,60 @@
+\chapter{Conclusion} \label{Conclusion}
+\section{General Conclusion} \label{General Conclusion}
+
+From the overall implementation of the detection system we can conclude that:
+\begin{itemize}
+  \item Drone and Wi-Fi signals have a very distinct frequency signature even though they cover relatively the same frequency bands.
+
+  \item Bluetooth and Wi-Fi both use similar center frequencies, which makes it hard for us to distinguish them on the basis of center frequencies alone.
+  \item Amount of bandwidth used by both Drone and Bluetooth signals is similar, which also makes it hard for us to distinguish between them based on bandwidth alone.
+\end{itemize}
+
+% add machine learning points here TODO
+
+Hence for our application, both bandwidth and center frequencies are part of the frequency  signature that we use to distinguish between drone and non-drone signals.
+We have categorized both Wi-Fi and Bluetooth as non drone and assigned them to a single category.
+
+\section{Challenges} \label{Challenges}
+During the Course of the project journey we encountered numerous challenges as follows
+\begin{itemize}
+  \item \underline{ PlutoSDR has a limited SNR sensitivity response:  }
+    \begin{itemize}
+      \item During the course of the project,we encounter the issue of high internal noise generated in the PlutoSDR during data capture even in the absence of any signals in the vicinity.
+      \item It was however not completely rectified, but was lowered to a situation wherein it was not a major influence, which resulted in lowered sensitivity in the captured data.
+    \end{itemize}
+  \item \underline{CSV resulting in larger loading times:}
+    \begin{itemize}
+      \item During the training phrase, a majority of the time was consumed by the system in simply loading of the stored dataframe in the csv format
+      \item This can be overcome by the used of .npy binary files in Python,which is however not suitable for our use-cases for generating the training dataset for the model.
+    \end{itemize}
+
+  \item \underline{Training requires longer time for Larger Dataset Length
+    }    \begin{itemize}
+      \item It was observed that for larger dataset lengths in our application,the system used to take a relatively long time in completing the epoch training cycle
+      \item It was however reducible to a lower extent by using batch training methodology which as a trade-off leading to lower model category accuracy at times
+
+%covid 
+    \end{itemize}
+
+  \item \underline{ Better Equipment required for better clarity of Data}%todo   
+    \begin{itemize}
+      \item At times it was felt that higher clarity of data is required to perform advanced data extraction and manipulation of the input data
+      \item This was superseded by our desire to rapidly  prototype as other SDRs which could provide better data had insufficient documentation and support for Python.
+
+        % expand this
+    \end{itemize}
+
+\end{itemize}
+\section{Future Work}\label{Future Work}
+\begin{itemize}
+
+  \item As seen the in prior section,there is an issue in differentiation between Bluetooth and Wi-Fi signals,which can overcome by quantitative analysis of the Bluetooth and Wi-Fi signal signatures along with their signal power regulations permitted by their specifications.
+    % \item Further training under multiple drone makers can be conducted in order to refine the proposed detection system in identifying drone of multiple makes.
+  \item Further training under multiple drone makers can be conducted in order:
+    \begin{itemize}
+      \item Enable the system to identify more drones.
+      \item To identify drone make and model based on their respective RF Signature.
+    \end{itemize}
+  \item The recorded signals can be studied  in time and frequency domain to find more correlation and differences between drone and non-drone signals.
+  \item Further studies can be done to distinguish between Bluetooth and drone signals based on their symbols and modulation schemes.
+\end{itemize}

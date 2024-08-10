@@ -1,0 +1,7 @@
+*aux
+*log
+*pdf
+Main_file.fdb_latexmk
+Main_file.fls
+Main_file.lof
+Main_file.toc

@@ -1,0 +1,49 @@
+%DO NOT MESS AROUND WITH THE CODE ON THIS PAGE UNLESS YOU %REALLY KNOW WHAT YOU ARE DOING
+\chapter{Introduction} \label{Introduction}
+\section{Preamble} \label{Preamble}
+
+\noindent An Unmanned Aerial Vehicle (UAV) or Uncrewed Aerial Vehicle, commonly known as a drone is an aircraft without a human pilot on board. UAVs are a component of an unmanned aircraft system (UAS), which include a UAV, a ground-based controller, and a system of communications between the two. The flight of UAVs may operate with various degrees of autonomy: either under remote control by a human operator or autonomously by on-board computers referred to as an autopilot.
+
+\noindent Compared to crewed aircraft, UAVs were originally used for missions which were too dull or dangerous for human physical intervention. While drones originated mostly in military applications, their use is rapidly finding many more applications including aerial photography, product deliveries, agriculture, policing and surveillance, infrastructure inspections, science, and drone racing.
+
+\noindent The Major Drone Manufacturers of nowadays are:
+\begin{itemize}
+\item DJI (Dajiang) Innovations: Their products include DJI Mavic and DJI Phantom series, both of which are mainly used for cinematography purposes due to their high reliability and HD video capabilities .
+\item Parrot SA: Their Products Include ANAFI Series, Parrot AR Series. Both of which can be deployed in military use cases as well as infrastructure inspections due to their higher range and HD video capabilities.\end{itemize}
+
+\noindent Recently, the usage of Unmanned Aerial Vehicles Drones has increased exponentially.
+Drones have been popular with the enthusiast community for more than 10 years. Introduction of hardware such as Ardupilot and FlySky controllers has brought down the complexity of making Do-it-Yourself drones down to a manageable standard. Also, the prices of consumer drones have gone down over the years. As such they have gotten cheaper and more ubiquitous. 
+
+\noindent As such these drones have a high chance of getting in hands of nefarious elements who can use them to invade personal privacy, conduct surveillance on sensitive installations such as military and commercial establishments and prove a hazard near airports.
+In the past Drones have been used by Naxal forces and terrorists for Surveillance on the Indian Army and CRPF troops. Recently there have also been cases where drones have been used to deliver fatal payloads on the  Indian army.
+
+\noindent With the introduction of drone delivery as last mile option by many e-commerce companies, drones are going to be more widespread. Hence the problems caused by drones are going to be more common.  Looking at such cases detection and identification of drones has to be our priority.
+
+\section{Motivation}\label{Motivation}
+
+\noindent Right now Drone identification in general is done by 4 methods. 
+\begin{itemize}
+  \item \underline{Drone identification using RADAR:} Drone identification using RADAR is one of the most common methods deployed by the military. It uses a Doppler or FMCW RADAR to detect drones. The advantage of this method is that it can track multiple drones simultaneously even during the night and heavy fog conditions. But the disadvantage of this method is that it requires the transmission license for civilian usage and checks to ensure that the spectrum used by the RADAR is empty.
+  \item \underline{Visual identification: }this is done by using thermal or normal cameras and image processing to detect drones. This method is fairly cheap and passive as it does not require any special equipment but is fairly ineffective when at night or in foggy conditions.
+
+  \item \underline{Acoustic identification:} In this method, we use the acoustic signature to detect drones. This method can detect drones at a short distance and when LOS detection is not always possible due to obstructions, etc. But it cannot detect drones unless they are under 300 m, as the acoustic signature of drones is very faint beyond this limit.
+  \item \underline{Identification using RF signature:} This method uses the RF signature of the drone to identify the drones. Each family of drones has its own unique RF control signals and modulation technique that constitutes its unique RF signature. This method can detect multiple drones and detect which family the drone belongs to, but it cannot detect drones which do not transmit any data back to the controller.
+\end{itemize}
+
+\noindent Our project tries to find a fairly cheap solution for finding the presence of UAVs by finding if the RF signature of a particular drone is present or not. This involves us learning about different Software Defined Radios - RTLSDR, ADALM-PLUTO among others and how to operate them via GQRX Software, GNU Radio and their Python APIs. It also involves us learning digital signal processing in Python and machine learning for identifying whether a given RF signature is of drone or something else like Wi-Fi or Bluetooth.
+
+
+\section{Outline} \label{Outline}
+
+\noindent Over the past few years, drones have been more common than before. So the issues with them have become more important than before. Right now they are available at an accessible price. Such drones have also been used in surveillance and attacks on individuals and the military. So in this situation, it is highly necessary to detect drones, and to find if a given drone is friendly or not.
+
+\noindent According to The SDR Forum and Institute of Electrical and Electronics Engineers (IEEE) P1900.1 group, Software Defined Radio(SDR) is defined as "Radio in which some or all of the physical layer functions are software defined". Using a SDR allows us a high level of freedom as compared to traditional radio equipment. We can quickly change filters, modulation schemes and even do some kind of signal processing that were not possible to implement in traditional radios  systems. It also allows us to quickly change target frequency and bandwidth in software as long as it is supported by the hardware.
+
+\noindent In our case, the SDR we decided to go with, ADALM-PLUTO, is a SDR evaluation board based on AD9363 and it has one RX and one TX channel.  It is able to measure and generate signals from 325 to 3800 MHz with a 20MHz bandwidth. It is able to do all this over a standard USB 3 connection which allows us to plug it in any computer and not worry about using up any ethernet port. It plugs in as a USB ethernet dongle and is easy to pass through to virtual machines to do any work. We also experimented with RTLSDR, a SDR which is able to only receive signals, but at a lower carrier frequency and has a stable bandwidth of 2.4 Mhz.
+
+\noindent Since the 2.4 GHz band is unlicensed, everything from microwave and cordless phones to Bluetooth and Wi-Fi works on this band. Since this band is unlicensed, commercial and hobbyist drones also use this band to transmit and receive control and video signals which makes it very hard to capture isolated drone signals. We captured the signals in isolated fields, where Bluetooth and Wi-Fi signals could be considered absent.
+
+\noindent After signal capturing, we need to process the signals to try and remove noise signals from the captured signals and try to isolate transmitted drone signals. In our case, we did this by first converting the signals from time domain to frequency domain by using Fast Fourier Transform and using signal strength as a parameter and cutting off signals that were below a certain threshold. 
+
+
+\noindent After signal processing, we trained a neural network on these signals to make the computer identify these signals. This network will later take a signal occupying a particular spectrum and try and to identify whether it is a drone signal or non-drone signal, which will be a base for jamming that particular spectrum occupied by  the signal.

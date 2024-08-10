@@ -1,0 +1,350 @@
+\begin{appendices}
+  \chapter{Appendix}% the above two commands help the appendix to appear in the table of contents
+  \vspace{-1cm}
+  \subsection{Installation instructions for libraries and environment}
+  \noindent \textbf{The following instructions were carried inside a virtual machine running ubuntu 20.04}
+
+  \noindent \underline{ Installation instructions for Conda }
+  \begin{enumerate}
+    \item Download the miniconda installer from the conda website.
+    \item Navigate to the folder where you have downloaded the installer and open it inside a terminal.
+    \item run the following command to make the installer executable
+      \begin{verbatim}
+        chmox +x <miniconda installer>
+      \end{verbatim}
+    \item run the following command to run the installer
+      \begin{verbatim}
+      ./<miniconda installer>
+      \end{verbatim}
+  \end{enumerate}
+
+  \noindent \underline{Installation instructions for Tensorflow with Conda }
+
+  \noindent Open a terminal and run following command to create a virtual environment for Tensorflow
+  \begin{verbatim}
+    conda create -n tf tensorflow
+  \end{verbatim}
+  \noindent The above command creates a virtual environment for Tensorflow and installs all the necessary packages required.
+  \noindent To activate the above virtual environment run
+  \begin{verbatim}
+  conda activate tf
+  \end{verbatim}
+
+  \newpage
+  \noindent \underline{Installation instructions for drivers and libraries of PlutoSDR}
+
+  \noindent PlutoSDR requires libiio, libad9361-iio and  pyadi-iio for interfacing.
+  Before installing any of these libraries, we will need some build tools. To install the build tools run the following command
+  \begin{verbatim}
+sudo apt-get install git libxml2 libxml2-dev bison flex libcdk5-dev \
+cmake python3-pip
+  \end{verbatim}
+  The Installation  instructions for the libraries are as follows.
+  \begin{itemize}
+    \item libiio
+
+      Run following commands inside terminal to install libiio
+      \begin{verbatim}
+cd ~
+git clone --branch v0.19 https://github.com/analogdevicesinc/libiio.git
+cd libiio
+cmake ./
+make all -j4
+sudo make install
+sudo ldconfig
+cd bindings/python/
+sudo python3 setup.py.cmakein install
+
+        \end{verbatim}
+        
+        \item   libad9361-iio
+
+      Run following commands inside terminal to install libad9361-iio
+      \begin{verbatim}
+cd ~
+git clone https://github.com/analogdevicesinc/libad9361-iio.git
+cd libad9361-iio
+cmake ./
+make -j3
+sudo make install
+      \end{verbatim}
+      \item pyadi-iio
+
+
+        Run following command inside terminal to install pyadi-iio
+        \begin{verbatim}
+cd ~
+git clone https://github.com/analogdevicesinc/pyadi-iio.git
+cd pyadi-iio
+sudo python3 setup.py install
+        \end{verbatim}
+
+  \end{itemize}
+
+  \newpage
+  \subsection{Code}
+  \textbf{Code for Capturing the Data}
+  \begin{verbatim}
+
+#@Author:Pritesh Naik
+import numpy as np   
+import adi    #(adi-Library for PlutoSDR) 
+import math     
+from scipy import signal
+import pandas as pd
+ 
+sample_rate = 250e4 # Hz
+b,a =signal.butter(3,.2)
+final = np.array([])
+flist=np.array([])
+ 
+##Function Calls
+def filter(b,a,freq):
+   z1=signal.lfilter_zi(b,a)
+   pl=signal.lfilter(b,a,freq)
+   return(pl)
+ 
+def setup(center_freq,sample_rate,final):
+ #PSD_Format
+    def power(val):
+    	p=abs(val**2)
+    	pdb=math.log10(p)
+    	return(pdb)
+
+ ##SDR Setup Commands
+    power=np.vectorize(power)
+    fname = center_freq/1e9
+    name=str('{:.3f}Ghz'.format(fname))
+    sdr = adi.Pluto("ip:192.168.2.1")
+    sdr.sample_rate = int(sample_rate)
+    # filter cutoff for Frame Bandwidth
+    sdr.rx_rf_bandwidth = int(sample_rate) 
+    sdr.rx_lo = int(center_freq)
+    sdr.rx_buffer_size = 1024  # buffer size used by PlutoSDR
+    
+    ##Sampling Signal at Carrier Freq
+    samples = sdr.rx()
+    freqx=np.linspace(int(-sample_rate//2+center_freq)
+       ,int(sample_rate//2+center_freq),int(1024))
+    frq=np.fft.fft(samples)
+    freq=np.fft.fftshift(frq)
+
+  #Detecting Required Amplitude Peaks
+    sig_avg = signal.find_peaks(filter(b,a,freq),height=10000)
+    print('Size:',sig_avg[0].size)
+    temp=np.array(sig_avg[0])
+    if(sig_avg[0].size>0):
+        print("Active Band:{}".format(name))
+        for i in range(0,temp.size):
+            temp[i]=temp[i]*(sample_rate/1000)+center_freq
+        print("Signal Peaks:",temp)
+        final=np.concatenate((final, temp))
+    return final
+ 
+#Rx Function Codes
+final = np.array([])
+print("Sample rate:",sample_rate,'Hz')
+for center_freq in range(2405,2715,3):
+   center_freq=int(center_freq*1e6)
+   print("Center_freq:",center_freq,'Hz')
+   final1=setup(center_freq,sample_rate,final)
+   final=final1
+print("Final Peaks_Array:",final)
+store=pd.DataFrame(final)    
+store.to_csv("result.csv")
+  \end{verbatim}
+
+  \textbf{Code for labeling the Dataset}
+  \begin{verbatim}
+import pandas as pd
+import numpy as np
+
+#Code for labeling and merging the sampled data to generate a testing set
+y = 0
+while y < 21:
+    c=np.array([])
+    e = 0
+    n = 0 	#insert starting file
+    while n < 20: 	#select more than last file
+        z ="Pure-Wifi_{}.00".format(n)  #modify file name as per required
+        initial=pd.read_csv(r'F:\Home-wifi\{}\{}.csv'
+          .format(y,z),usecols=[1])
+        comp= initial.to_numpy()
+
+         a=np.array([])
+     # Add machine learning labels.
+     # 1 if drone data set and 0 if non-drone dataset 
+        a=np.append(a,0)	
+        for b in comp:
+            a =np.append(a,b[0])
+        print(y,n)
+        
+        d =0
+        d = np.sum(a)
+        print(d)
+        if d != 0:
+            if e == 0:
+                c = np.copy(a)
+                e = e + 1
+            else:
+                c = np.column_stack((c,a))                      
+        n = n + 1
+    storeR=pd.DataFrame(c)
+    storeR.to_csv(r'F:\Home-wifi\{}\testing-set.csv'.format(y),
+      header=None, index=False)
+    y = y + 1
+print("end")
+
+#Code to Merge multiple training sets into one set 
+#with different ratios of drone and non drone datasets 
+e = 0
+c=np.array([])
+y = 0
+while y < 6:
+    initial=pd.read_csv(r'F:\Drone-Set-new\VA+VB\{}\testing-set.csv'
+      .format(y),header=None)
+    comp= initial.to_numpy()
+    print(comp.shape)
+    if e == 0:
+        c = np.copy(initial)
+        print(c.shape)
+        e = e + 1
+    else:
+        print(c.shape)
+        c = np.concatenate((c,comp),axis = 1)
+    y = y + 1
+    
+z = 16
+while z < 21:
+    initial=pd.read_csv(r'F:\Home-wifi\{}\testing-set.csv'
+      .format(z),header=None)
+    comp= initial.to_numpy()
+    print(comp.shape)
+    print(c.shape)
+    c = np.concatenate((c,comp),axis = 1)
+    z = z + 1
+print(c.shape)
+
+np.random.shuffle(np.transpose(c))
+print(c.shape)
+
+np.transpose(c)
+print(c.shape)
+
+storeR=pd.DataFrame(c)
+storeR.to_csv(r'F:\Drone-Set\VA+VB\mixedColms.csv',
+  header=None, index=False)
+print("end")   
+  \end{verbatim}
+  \newpage
+
+  \textbf{Code for Training the Neural Network}
+ \begin{verbatim} 
+import tensorflow as tf
+import pandas as pd
+import numpy as np
+import matplotlib.pyplot as plt
+from tensorflow.keras import layers
+from tensorflow.keras.layers.experimental import preprocessing
+normalize = preprocessing.Normalization()
+np.set_printoptions(precision=4)  
+
+#Reading csv File
+print("CSV File Reading....") 
+df = pd.read_csv("Training-set-Trans2.csv")
+train_features = df.copy()
+
+#Classification Feature Extraction(1/0)
+train_labels = train_features.pop('0')    
+train_features = np.array(train_features)
+batch_size=train_labels.shape[0]
+normalize.adapt(train_features)
+
+#Converting to Dataset
+train_dataset = tf.data.Dataset.from_tensor_slices(
+  (train_features, train_labels)) 
+ 
+#Dataset-Randomizer
+BATCH_SIZE = 1
+SHUFFLE_BUFFER_SIZE = int(batch_size)
+train_dataset = train_dataset
+  .shuffle(SHUFFLE_BUFFER_SIZE).batch(BATCH_SIZE)
+ 
+#Model Creation
+model = tf.keras.Sequential([
+   normalize,
+   tf.keras.layers.Dense(256,activation='relu'),
+   tf.keras.layers.Dense(128),
+   tf.keras.layers.Dense(64, activation='relu'),
+   tf.keras.layers.Dense(32),
+   tf.keras.layers.Dense(16, activation='relu'),
+   tf.keras.layers.Dense(2)
+ ])
+model.compile(optimizer=tf.keras.optimizers.RMSprop(),
+             loss=tf.keras.losses
+             .SparseCategoricalCrossentropy(from_logits=True),
+             metrics=['accuracy',])
+print("Model Training")
+history=model.fit(train_dataset,epochs=12)
+ 
+# Training Parameter Plotting
+plt.title("Training Accuracy")
+plt.plot(history.history['accuracy'])
+plt.ylabel("Accuracy")
+plt.xlabel("Epoch")
+plt.legend(["Accuracy"],loc="upper left")
+plt.savefig("Model-Accuracy.png")
+plt.plot(history.history['loss'])
+plt.title("Model Loss")
+plt.ylabel("Loss")
+plt.xlabel("Epoch")
+plt.legend(["Model Loss"],loc="upper left")
+plt.savefig("Model-Loss.png")
+print("Model Evaluating")
+ 
+#Creating Testing-Dataset
+df = pd.read_csv("Training-set-Trans2.csv")
+test_features = df.copy()
+test_labels = test_features.pop('0')
+test_features = np.array(test_features)
+test_dataset = tf.data.Dataset.from_tensor_slices(
+  (test_features, test_labels))
+test_loss, test_acc = model.evaluate(test_features,
+  test_labels,verbose=2)
+ 
+#Outputted Results
+print("At Loss: {:5.2f}%".format(100 * test_loss))
+print("Accuracy: {:5.2f}%".format(100 * test_acc))
+print("Tested Against:",test_labels.shape[0]," Values")
+model.save("MyModel1")
+ \end{verbatim}
+\newpage
+ \textbf{Code for Classifying the output}
+ \begin{verbatim}
+
+import tensorflow as tf
+import pandas as pd
+import numpy as np
+
+model = tf.keras.models.load_model('MyModel1')
+df = pd.read_csv("Testing-set.csv")
+predict_features = df.copy()
+
+predict_features = np.array(predict_features)
+predictions = model.predict(predict_features)
+predictions = tf.nn.sigmoid(predictions)
+print('Predictions:')
+for i in predictions:
+  print(np.argmax(i),end =" ")
+ \end{verbatim}
+  \chapter{Data Sheets}
+  In our project we primarily used two Software defined Radios
+  \begin{enumerate}
+      \item RTLSDR
+      \item PlutoSDR
+  \end{enumerate}
+\includepdf[pages=-, fitpaper=true]{ADALM-PLUTO-Product-Highlight.pdf }
+\includepdf[pages=-, fitpaper=true]{RTL-SDR-Blog-V3-Datasheet.pdf}
+
+\end{appendices}
+\pagebreak
